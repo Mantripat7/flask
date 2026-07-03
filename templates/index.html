@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home page</title>
+    <link rel="stylesheet"  href="{{ url_for('static', filename='css/style.css')  }}">
+</head>
+<body>
+    <h1 >Hello, World !</h1>
+    <p>welcome , {{ data.name }}</p>
+    <p>Age: {{ data.age }}</p>
+    <p>Address: {{ data.address }}</p>
+
+    {% if data.age >=18 %}
+        <p>You are eligible to vote.</p>
+    {% else %}
+        <p>You are not eligible to vote.</p>
+    {% endif %}
+
+
+    <h2>Skills</h2>
+
+    <ul>
+    {% for i in data.skills %}
+        <li>{{ i }}</li>
+    {% endfor %}
+    </ul>
+    <br>
+    <a href = "{{ url_for('about') }}" target="_blank"> click here to open about page </a>
+    <br>
+    <a href = "{{ url_for('contact') }}"> click here to open contact page </a>
+
+    <br>
+    <img src="{{ url_for('static', filename='images/pic.jpg')}}" alt="image">
+
+
+</body>
+</html>
