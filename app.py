@@ -1,37 +1,17 @@
-from flask import Flask, render_template, request, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
+from flask import render_template, request, redirect, session, url_for, flash
+from datetime import datetime
+import os 
+from werkzeug.utils import secure_filename
+from models import *
+from __init__ import create_app
+# from flask_migrate import Migrate
 
-app = Flask(__name__,static_folder="static",static_url_path="/static")
-
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-db = SQLAlchemy(app)
+from flask_mail import Mail, Message, mail
 
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key = True)
-    name = db.Column(db.String(50),nullable = False )
-    email = db.Column(db.String(50), unique = True)
-    password = db.Column(db.String(50))
+app = create_app()
 
-with app.app_context():
-    db.create_all()
-
-# users = [
-#     {
-#         "email": "mohit@gmail.com",
-#         "password": "123",
-#         "name": "mohit"
-#     },
-#     {
-#         "email": "aman@gmail.com",
-#         "password": "456",
-#         "name": "aman"
-#     },
-
-# ]
-
+# migrate = Migrate(app, db)
 
 @app.route("/")
 def index():
@@ -53,9 +33,13 @@ def login():
 
         current_user = User.query.filter_by(email = form_email).first()
         if current_user and current_user.password == form_password:
+            session["user_id"] = current_user.id
+            session["user_name"] = current_user.name
+            flash("Login Successful")
             return redirect(url_for('home', username = current_user.name))
         
-        return "login failed"
+        flash("Invalid Credentails")
+        return redirect(url_for('login'))
     else:
         return render_template("login.html")
 
@@ -72,7 +56,8 @@ def contact():
 @app.route("/home")
 def home():
     username = request.args.get("username", "Guest")
-    return render_template("home.html", name=username)
+    students = Student.query.all()
+    return render_template("home.html", name=username, students=students)
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -90,14 +75,106 @@ def register():
         )
         db.session.add(new_user)
         db.session.commit()
+        flash("Account Created")
         return redirect(url_for("login"))
 
      
     else:
         return render_template("register.html")
 
+@app.route("/student", methods =["GET", "POST"])
+def student():
+    if "user_id" not in session:
+        flash("Please login to add students")
+        return redirect(url_for("login"))
 
 
+
+    if request.method == "POST":
+        form_name = request.form.get("name")
+        form_email = request.form.get("email")
+        form_dob = request.form.get("dob")
+        form_marks = request.form.get("marks")
+        form_address = request.form.get("address")
+        form_profile_pic = request.files.get("profile_pic")
+        form_resume = request.files.get("resume")
+        form_is_active = request.form.get("is_active")
+
+        if form_profile_pic and form_profile_pic.filename != "":
+            pic_filename =  secure_filename(form_profile_pic.filename)
+            path = os.path.join(app.config["UPLOAD_PP"] , pic_filename)
+            form_profile_pic.save(path)
+        else:
+            pic_filename = None
+
+        if form_resume and form_resume.filename != "":
+            resume_filename =  secure_filename(form_resume.filename)
+            path = os.path.join(app.config["UPLOAD_RESUME"] , resume_filename)
+            form_resume.save(path)
+        else:
+            resume_filename = None
+        update_dob = datetime.strptime(form_dob, "%Y-%m-%d").date()
+        print(update_dob, type(update_dob))
+        new_student = Student(
+            name = form_name,
+            email = form_email,
+            dob = update_dob,
+            marks = float(form_marks),
+            address = form_address,
+            profile_pic = pic_filename,
+            resume = resume_filename,
+            is_active = True if form_is_active == "on" else False
+        )
+        db.session.add(new_student)
+        db.session.commit()
+
+        print("student data added")
+        return redirect(url_for("student"))
+
+    return render_template("student.html")
+
+
+@app.route("/delete_student/<int:student_id>" , methods = ["GET"])
+def delete_student(student_id):
+    student = Student.query.get(student_id)
+    if student:
+        db.session.delete(student)
+        db.session.commit()
+        flash("Student deleted successfully")
+        
+    else:
+        flash("Student not found")
+
+    return redirect(url_for("home"))
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Logged out successfully")
+    return redirect(url_for("login"))
+
+
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        form_email = request.form.get("email")
+        print( form_email)
+        user= User.query.filter_by(email=form_email).first()
+        if user:
+            msg = Message(
+                    subject = "Password Reset Request",
+                    sender = app.config['MAIL_DEFAULT_SENDER'],
+                    recipients = [form_email],
+                   
+            )
+
+            msg.body = "Hello your new password is: 123456"
+            mail.send(msg)
+
+            
+
+    return render_template("login.html")
 
 if __name__=="__main__":
     app.run(debug=True, use_reloader=True)
