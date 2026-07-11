@@ -4,10 +4,12 @@ import os
 from werkzeug.utils import secure_filename
 from models import *
 from __init__ import create_app
+
+import requests
 # from flask_migrate import Migrate
 
-from flask_mail import Mail, Message, mail
-
+from flask_mail import Mail, Message
+from __init__ import mail
 
 app = create_app()
 
@@ -75,6 +77,7 @@ def register():
         )
         db.session.add(new_user)
         db.session.commit()
+     
         flash("Account Created")
         return redirect(url_for("login"))
 
@@ -162,19 +165,53 @@ def forgot_password():
         print( form_email)
         user= User.query.filter_by(email=form_email).first()
         if user:
-            msg = Message(
-                    subject = "Password Reset Request",
-                    sender = app.config['MAIL_DEFAULT_SENDER'],
-                    recipients = [form_email],
-                   
-            )
-
-            msg.body = "Hello your new password is: 123456"
-            mail.send(msg)
-
             
+            msg = Message("Password Reset Request", recipients=[form_email])
+            msg.body = f"Hello {user.name},\n\nYou requested a password reset. Your new password is: 123 \n\nPlease keep it secure."
+    
+            mail.send(msg)
+            print("mail sent")
+            user.password = "123"
+            db.session.commit()
+
+
+            flash("Password reset email sent.")
+            return redirect(url_for("login"))
+        else:
+            print("Email not found")
+            flash("Email not found.")
+            return redirect(url_for("login"))
 
     return render_template("login.html")
+
+@app.route("/books", methods=["GET", "POST"] )
+def book():
+    search = request.args.get("search", "")
+
+    page = request.args.get("page", 1, type=int)
+
+    per_page = 3
+    if search:
+        books = Book.query.filter( Book.title.ilike(f"%{search}%") | Book.author.ilike(f"%{search}%") ).paginate(page=page, per_page=per_page, error_out=False)
+    else:
+        books = Book.query.paginate(page=page, per_page=per_page, error_out=False)
+
+    return render_template("book.html", books=books, search = search)
+
+
+
+@app.route("/weather")
+def weather():
+
+    url = "https://api.open-meteo.com/v1/forecast?latitude=88.88&longitude=77.87&current_weather=True"
+
+    response = requests.get(url)
+
+    data = response.json()
+
+
+    return render_template("weather.html", data=data)
+
 
 if __name__=="__main__":
     app.run(debug=True, use_reloader=True)

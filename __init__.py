@@ -1,8 +1,10 @@
 from flask import Flask
 from models import *
-from flask_migrate import Migrate
+from flask_mail import Mail
 
-migrate = Migrate()
+mail = Mail()
+# from flask_migrate import Migrate
+# migrate = Migrate()
 
 def create_app():
     app = Flask(__name__,static_folder="static",static_url_path="/static")
@@ -19,12 +21,13 @@ def create_app():
     app.config['MAIL_PORT'] = 587
     app.config['MAIL_USE_TLS'] = True
     app.config['MAIL_USE_SSL'] = False
-    app.config['MAIL_USERNAME'] = 'openmaterial01@gmail.com'
-    app.config['MAIL_PASSWORD'] = 'your_password'
-    app.config['MAIL_DEFAULT_SENDER'] = 'openmaterial01@gmail.com'
+    app.config['MAIL_USERNAME'] = 'openmaterial2@gmail.com'
+    app.config['MAIL_PASSWORD'] = 'okiu rvrt ozze dkks'
+    app.config['MAIL_DEFAULT_SENDER'] = 'openmaterial2@gmail.com'
 
     db.init_app(app)
-    migrate.init_app(app, db)
+    mail.init_app(app)
+    # migrate.init_app(app, db)
 
     with app.app_context():
         db.create_all()

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="container ">
+    <h3 class="text-center mt-5">
+        
+        Welcome to our Book Store
+    </h3>
+{% if search %}
+<h6>Search result for " {{ search }} "...</h6>
+{% endif  %}
+
+
+<div class="row">
+
+    {% for book in books %}
+
+  <div class="col-sm-3 mb-3 mb-sm-0  my-5">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">{{ book.title }}</h5>
+        <p class="card-text">Author name : {{ book.author }}</p>
+        <a href="#" class="btn btn-primary">Select Book</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+ 
+</div>
+
+
+
+
+
+
+<nav aria-label="Page navigation example ">
+  <ul class="pagination justify-content-center my-5">
+    {% for page_num in books.iter_pages() %}
+            {% if page_num %}
+
+                    {% if page_num == books.page %}
+                    <li class="page-item"><a class="page-link active" >{{ page_num }} </a></li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('book', page=page_num) }}" >{{ page_num }} </a></li>
+                    {% endif %}
+            {% else %}
+            ...
+            {% endif %}
+    {% endfor %}
+    
+  </ul>
+</nav>
+</div>
+
+
+{% endblock %}
