@@ -1,19 +1,36 @@
-from flask import render_template, request, redirect, session, url_for, flash
+from flask import Flask, render_template, request, redirect, session, url_for, flash
 from datetime import datetime
 import os 
 from werkzeug.utils import secure_filename
-from models import *
-from __init__ import create_app
-
 import requests
-# from flask_migrate import Migrate
+from extensions import db , mail, migrate
 
-from flask_mail import Mail, Message
-from __init__ import mail
 
-app = create_app()
+app = Flask(__name__,static_folder="static",static_url_path="/static")
+app.secret_key = "12345"
+# configuration for db 
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+# configuration for uploads
+app.config["UPLOAD_PP"] = "static/uploads/profile_pics" 
+app.config["UPLOAD_RESUME"] = "static/uploads/resumes"
+# configuration for mail
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = 'openmaterial2@gmail.com'
+app.config['MAIL_PASSWORD'] = 'okiu rvrt ozze dkks'
+app.config['MAIL_DEFAULT_SENDER'] = 'openmaterial2@gmail.com'
 
-# migrate = Migrate(app, db)
+db.init_app(app)
+mail.init_app(app)
+migrate.init_app(app, db)
+ 
+
+from models import *
+
+
 
 @app.route("/")
 def index():
