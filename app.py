@@ -4,24 +4,28 @@ import os
 from werkzeug.utils import secure_filename
 import requests
 from extensions import db , mail, migrate
+from dotenv import load_dotenv
+ 
 
+load_dotenv()
 
 app = Flask(__name__,static_folder="static",static_url_path="/static")
-app.secret_key = "12345"
-# configuration for db 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+# Secret Key
+app.secret_key = os.getenv("SECRET_KEY")
+# Database
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-# configuration for uploads
-app.config["UPLOAD_PP"] = "static/uploads/profile_pics" 
-app.config["UPLOAD_RESUME"] = "static/uploads/resumes"
-# configuration for mail
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = 'openmaterial2@gmail.com'
-app.config['MAIL_PASSWORD'] = 'okiu rvrt ozze dkks'
-app.config['MAIL_DEFAULT_SENDER'] = 'openmaterial2@gmail.com'
+# Upload Paths
+app.config["UPLOAD_PP"] = os.getenv("UPLOAD_PP")
+app.config["UPLOAD_RESUME"] = os.getenv("UPLOAD_RESUME")
+# Mail Configuration
+app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
+app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT"))
+app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS") == "True"
+app.config["MAIL_USE_SSL"] = os.getenv("MAIL_USE_SSL") == "True"
+app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
+app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_DEFAULT_SENDER")
 
 db.init_app(app)
 mail.init_app(app)
